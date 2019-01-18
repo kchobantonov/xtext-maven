@@ -1,23 +1,32 @@
-node {
-	properties([
-		[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', numToKeepStr: '15']]
-	])
-	
-	stage('Checkout') {
-		checkout scm
-		
-		dir('build') { deleteDir() }
-		dir('.m2/repository/org/eclipse/xtext') { deleteDir() }
-		dir('.m2/repository/org/eclipse/xtend') { deleteDir() }
+pipeline {
+	agent any
+
+	options {
+		buildDiscarder(logRotator(numToKeepStr:'15'))
+	}
+
+	tools { 
+		maven 'M3'
 	}
 	
-	stage('Maven Build') {
-		def workspace = pwd()
-		def mvnHome = tool 'M3'
-		env.M2_HOME = "${mvnHome}"
-		sh "${mvnHome}/bin/mvn --batch-mode --update-snapshots -fae -PuseJenkinsSnapshots -DJENKINS_URL=$JENKINS_URL -Dmaven.test.failure.ignore=true -Dmaven.repo.local=${workspace}/.m2/repository -DJENKINS_URL=$JENKINS_URL -f org.eclipse.xtext.maven.parent/pom.xml -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn clean deploy"
-		step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/*.xml'])
-	}
 	
-	archive 'build/**'
+	stages {
+		stage('Checkout') {
+			steps {
+				checkout scm
+			}
+		}
+
+		stage('Maven Build') {
+			steps {
+				sh 'sh ./1-maven-build.sh'
+			}
+		}
+	}
+
+	post {
+		success {
+			archiveArtifacts artifacts: 'build/**'
+		}
+	}
 }

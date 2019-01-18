@@ -38,10 +38,6 @@
 		</dependencies>
 	</dependencyManagement>
 
-	<modules>
-		<module>../org.eclipse.xtext.maven.plugin</module>
-	</modules>
-	
 	<build>
 		<extensions>
 			<!-- See https://jira.codehaus.org/browse/MINSTALL-102 -->
